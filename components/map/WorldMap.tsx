@@ -1,13 +1,4 @@
 "use client";
-import { useState } from "react";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  ZoomableGroup,
-} from "react-simple-maps";
-
-const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 interface Props {
   selectedCountry: string;
@@ -15,134 +6,88 @@ interface Props {
   onSelectCountry: (code: string) => void;
 }
 
-// ISO numeric → alpha2
-const ISO_MAP: Record<string, string> = {
-  "004":"AF","008":"AL","012":"DZ","024":"AO","032":"AR","036":"AU","040":"AT",
-  "050":"BD","056":"BE","068":"BO","076":"BR","100":"BG","104":"MM","116":"KH",
-  "120":"CM","124":"CA","144":"LK","152":"CL","156":"CN","170":"CO","180":"CD",
-  "188":"CR","192":"CU","203":"CZ","208":"DK","214":"DO","218":"EC","818":"EG",
-  "231":"ET","246":"FI","250":"FR","276":"DE","288":"GH","300":"GR","320":"GT",
-  "324":"GN","332":"HT","340":"HN","348":"HU","356":"IN","360":"ID","364":"IR",
-  "368":"IQ","372":"IE","376":"IL","380":"IT","388":"JM","392":"JP","400":"JO",
-  "404":"KE","408":"KP","410":"KR","414":"KW","418":"LA","422":"LB","504":"MA",
-  "484":"MX","496":"MN","508":"MZ","524":"NP","528":"NL","558":"NI","566":"NG",
-  "578":"NO","586":"PK","591":"PA","604":"PE","608":"PH","616":"PL","620":"PT",
-  "630":"PR","634":"QA","642":"RO","643":"RU","682":"SA","686":"SN","706":"SO",
-  "710":"ZA","724":"ES","752":"SE","756":"CH","760":"SY","764":"TH","788":"TN",
-  "792":"TR","800":"UG","804":"UA","784":"AE","826":"GB","840":"US","858":"UY",
-  "860":"UZ","862":"VE","704":"VN","887":"YE","894":"ZM","716":"ZW","064":"BT",
+const COUNTRY_NAMES: Record<string, string> = {
+  AF:"Afghanistan",AL:"Albania",DZ:"Algeria",AO:"Angola",AR:"Argentina",AU:"Australia",
+  AT:"Austria",BD:"Bangladesh",BE:"Belgium",BO:"Bolivia",BR:"Brazil",BG:"Bulgaria",
+  MM:"Myanmar",KH:"Cambodia",CM:"Cameroon",CA:"Canada",LK:"Sri Lanka",CL:"Chile",
+  CN:"China",CO:"Colombia",CD:"DR Congo",CR:"Costa Rica",CZ:"Czech Republic",
+  DK:"Denmark",DO:"Dominican Rep.",EC:"Ecuador",EG:"Egypt",ET:"Ethiopia",FI:"Finland",
+  FR:"France",DE:"Germany",GH:"Ghana",GR:"Greece",GT:"Guatemala",GN:"Guinea",
+  HT:"Haiti",HN:"Honduras",HU:"Hungary",IN:"India",ID:"Indonesia",IR:"Iran",
+  IQ:"Iraq",IE:"Ireland",IL:"Israel",IT:"Italy",JM:"Jamaica",JP:"Japan",
+  JO:"Jordan",KE:"Kenya",KP:"North Korea",KR:"South Korea",KW:"Kuwait",
+  LA:"Laos",LB:"Lebanon",MA:"Morocco",MX:"Mexico",MN:"Mongolia",MZ:"Mozambique",
+  NP:"Nepal",NL:"Netherlands",NI:"Nicaragua",NG:"Nigeria",NO:"Norway",PK:"Pakistan",
+  PA:"Panama",PE:"Peru",PH:"Philippines",PL:"Poland",PT:"Portugal",RO:"Romania",
+  RU:"Russia",SA:"Saudi Arabia",SN:"Senegal",SO:"Somalia",ZA:"South Africa",
+  ES:"Spain",SE:"Sweden",CH:"Switzerland",SY:"Syria",TH:"Thailand",TN:"Tunisia",
+  TR:"Turkey",UG:"Uganda",UA:"Ukraine",AE:"UAE",GB:"United Kingdom",US:"United States",
+  UY:"Uruguay",UZ:"Uzbekistan",VE:"Venezuela",VN:"Vietnam",YE:"Yemen",ZM:"Zambia",
+  ZW:"Zimbabwe",BT:"Bhutan",NZ:"New Zealand",
 };
 
-function getColor(count: number, isSelected: boolean): string {
-  if (isSelected) return "#f97316";
-  if (count === 0) return "#1e293b";
-  if (count < 5) return "#1d4ed8";
-  if (count < 20) return "#2563eb";
-  if (count < 50) return "#3b82f6";
-  if (count < 100) return "#6366f1";
-  return "#8b5cf6";
+function getColor(count: number): string {
+  if (count === 0) return "bg-gray-800 text-gray-600 border-gray-700";
+  if (count < 10) return "bg-blue-900/60 text-blue-300 border-blue-700/50 hover:bg-blue-800/60";
+  if (count < 50) return "bg-indigo-900/60 text-indigo-300 border-indigo-700/50 hover:bg-indigo-800/60";
+  if (count < 100) return "bg-violet-900/60 text-violet-300 border-violet-700/50 hover:bg-violet-800/60";
+  return "bg-purple-900/60 text-purple-300 border-purple-700/50 hover:bg-purple-800/60";
 }
 
 export default function WorldMap({ selectedCountry, stationCounts, onSelectCountry }: Props) {
-  const [tooltip, setTooltip] = useState<{ name: string; count: number; x: number; y: number } | null>(null);
+  const countries = Object.entries(COUNTRY_NAMES).sort((a, b) =>
+    (stationCounts[b[0]] || 0) - (stationCounts[a[0]] || 0)
+  );
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl border border-white/10 bg-gray-900/50">
-      <ComposableMap
-        projection="geoNaturalEarth1"
-        style={{ width: "100%", height: "480px" }}
-      >
-        <ZoomableGroup zoom={1} minZoom={0.5} maxZoom={8}>
-          <Geographies geography={GEO_URL}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
-                const alpha2 = ISO_MAP[String(geo.id).padStart(3, "0")] || "";
-                const count = stationCounts[alpha2] || 0;
-                const isSelected = selectedCountry === alpha2;
-
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    onClick={() => {
-                      if (alpha2) onSelectCountry(isSelected ? "" : alpha2);
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!alpha2) return;
-                      setTooltip({
-                        name: geo.properties?.name || alpha2,
-                        count,
-                        x: (e as unknown as MouseEvent).clientX,
-                        y: (e as unknown as MouseEvent).clientY,
-                      });
-                    }}
-                    onMouseLeave={() => setTooltip(null)}
-                    style={{
-                      default: {
-                        fill: getColor(count, isSelected),
-                        stroke: "#0f172a",
-                        strokeWidth: 0.5,
-                        outline: "none",
-                        cursor: alpha2 ? "pointer" : "default",
-                        transition: "fill 0.15s ease",
-                      },
-                      hover: {
-                        fill: alpha2 ? "#f97316" : "#1e293b",
-                        stroke: "#0f172a",
-                        strokeWidth: 0.5,
-                        outline: "none",
-                        opacity: 0.9,
-                      },
-                      pressed: {
-                        fill: "#ea580c",
-                        outline: "none",
-                      },
-                    }}
-                  />
-                );
-              })
-            }
-          </Geographies>
-        </ZoomableGroup>
-      </ComposableMap>
-
-      {/* Tooltip */}
-      {tooltip && (
-        <div
-          className="pointer-events-none fixed z-50 rounded-xl border border-white/10 bg-gray-900/95 px-3 py-2 text-sm shadow-xl backdrop-blur-sm"
-          style={{ left: tooltip.x + 12, top: tooltip.y - 40 }}
-        >
-          <p className="font-semibold text-white">{tooltip.name}</p>
-          <p className="text-gray-400">
-            {tooltip.count > 0 ? `${tooltip.count} stations` : "No stations available"}
-          </p>
-        </div>
-      )}
-
+    <div className="w-full rounded-2xl border border-white/10 bg-gray-900/50 p-4">
       {/* Legend */}
-      <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-xl border border-white/10 bg-gray-900/90 px-3 py-2 text-xs backdrop-blur-sm">
-        <span className="text-gray-400">Stations:</span>
+      <div className="mb-4 flex items-center gap-3 text-xs text-gray-500">
+        <span>Stations:</span>
         {[
-          { color: "#1e293b", label: "0" },
-          { color: "#1d4ed8", label: "1-4" },
-          { color: "#3b82f6", label: "5-49" },
-          { color: "#6366f1", label: "50-99" },
-          { color: "#8b5cf6", label: "100+" },
+          { color: "bg-gray-800", label: "0" },
+          { color: "bg-blue-900", label: "1-9" },
+          { color: "bg-indigo-900", label: "10-49" },
+          { color: "bg-violet-900", label: "50-99" },
+          { color: "bg-purple-900", label: "100+" },
         ].map(({ color, label }) => (
           <span key={label} className="flex items-center gap-1">
-            <span className="h-3 w-3 rounded-sm" style={{ background: color }} />
-            <span className="text-gray-400">{label}</span>
+            <span className={`h-3 w-3 rounded-sm ${color}`} />
+            {label}
           </span>
         ))}
-        <span className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded-sm bg-orange-500" />
-          <span className="text-orange-400">Selected</span>
-        </span>
       </div>
 
-      <div className="absolute right-3 top-3 rounded-lg border border-white/10 bg-gray-900/80 px-2 py-1 text-xs text-gray-400 backdrop-blur-sm">
-        Scroll to zoom · Drag to pan · Click to filter
+      {/* Country grid */}
+      <div className="grid max-h-[420px] grid-cols-3 gap-1.5 overflow-y-auto pr-1 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+        {countries.map(([code, name]) => {
+          const count = stationCounts[code] || 0;
+          const isSelected = selectedCountry === code;
+          return (
+            <button
+              key={code}
+              onClick={() => onSelectCountry(isSelected ? "" : code)}
+              disabled={count === 0}
+              className={`rounded-lg border px-2 py-2 text-left transition-all ${
+                isSelected
+                  ? "border-orange-500 bg-orange-500/20 text-orange-300"
+                  : getColor(count)
+              } ${count === 0 ? "cursor-default opacity-40" : "cursor-pointer"}`}
+            >
+              <p className="truncate text-xs font-medium leading-tight">{name}</p>
+              {count > 0 && (
+                <p className={`text-xs font-bold ${isSelected ? "text-orange-400" : "text-gray-400"}`}>
+                  {count}
+                </p>
+              )}
+            </button>
+          );
+        })}
       </div>
+
+      <p className="mt-3 text-center text-xs text-gray-600">
+        Click any country to filter stations · Scroll to see all
+      </p>
     </div>
   );
 }
