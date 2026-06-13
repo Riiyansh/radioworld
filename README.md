@@ -2,7 +2,7 @@
 
 A full-stack web application to stream **30,000+ live radio stations** from every country on Earth. Built with Next.js 14, PostgreSQL, NextAuth.js, and the Radio Browser API.
 
-> **Live demo:** [radioworld.vercel.app](https://radioworld.vercel.app)
+> **Live demo:** Deploy instructions below — set up in ~5 minutes
 
 ---
 
