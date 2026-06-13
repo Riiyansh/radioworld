@@ -1,65 +1,116 @@
-import Image from "next/image";
+"use client";
+import { useEffect, useState } from "react";
+import { getIndianStations, getUniqueLanguages } from "@/lib/api";
+import { Station } from "@/lib/types";
+import StationCard from "@/components/stations/StationCard";
+import Link from "next/link";
+import { Radio, TrendingUp, Globe, Loader2 } from "lucide-react";
 
 export default function Home() {
+  const [stations, setStations] = useState<Station[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getIndianStations().then((data) => {
+      setStations(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const languages = getUniqueLanguages(stations);
+  const featured = stations.slice(0, 8);
+  const byLanguage = languages.slice(0, 6);
+
+  if (loading) return (
+    <div className="flex h-64 items-center justify-center gap-3 text-gray-400">
+      <Loader2 className="h-6 w-6 animate-spin text-orange-400" />
+      <span>Loading stations...</span>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="mx-auto max-w-7xl px-4 py-8 space-y-12">
+
+      {/* Hero */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-600 via-red-600 to-pink-700 p-8 md:p-12">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+        <div className="relative">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+            {stations.length}+ stations live
+          </div>
+          <h1 className="mb-3 text-4xl font-bold text-white md:text-5xl">
+            The World's Radio,<br />All in One Place
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mb-6 max-w-md text-lg text-white/80">
+            Stream 30,000+ live radio stations from every country on Earth. Free, no signup, just play.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/stations"
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-orange-600 shadow-lg transition hover:bg-orange-50"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <Radio className="h-5 w-5" /> Browse All Stations
+          </Link>
         </div>
-      </main>
+      </section>
+
+      {/* Stats */}
+      <section className="grid grid-cols-3 gap-4">
+        {[
+          { icon: Radio, label: "Stations", value: stations.length + "+" },
+          { icon: Globe, label: "Languages", value: languages.length + "+" },
+          { icon: TrendingUp, label: "Live Now", value: "Free" },
+        ].map(({ icon: Icon, label, value }) => (
+          <div key={label} className="rounded-2xl border border-white/5 bg-white/5 p-5 text-center">
+            <Icon className="mx-auto mb-2 h-6 w-6 text-orange-400" />
+            <p className="text-2xl font-bold text-white">{value}</p>
+            <p className="text-sm text-gray-400">{label}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* Trending */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-orange-400" /> Trending Stations
+          </h2>
+          <Link href="/stations" className="text-sm text-orange-400 hover:text-orange-300">
+            View all →
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8">
+          {featured.map((station) => (
+            <StationCard key={station.stationuuid} station={station} />
+          ))}
+        </div>
+      </section>
+
+      {/* Browse by language */}
+      <section>
+        <h2 className="mb-4 text-xl font-bold text-white">Browse by Language</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+          {byLanguage.map((lang) => {
+            const count = stations.filter((s) =>
+              s.language.toLowerCase().includes(lang.toLowerCase())
+            ).length;
+            return (
+              <Link
+                key={lang}
+                href={`/stations?language=${lang.toLowerCase()}`}
+                className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/5 bg-white/5 p-5 text-center transition hover:border-orange-500/30 hover:bg-orange-500/5"
+              >
+                <span className="text-2xl">
+                  {lang === "Hindi" ? "🇮🇳" : lang === "Tamil" ? "🎵" : lang === "Telugu" ? "🎶" :
+                   lang === "Bengali" ? "📻" : lang === "Marathi" ? "🎙️" : "📡"}
+                </span>
+                <p className="font-semibold text-white">{lang}</p>
+                <p className="text-xs text-gray-500">{count} stations</p>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,0 +1,19 @@
+{
+  "name": "RadioWorld",
+  "short_name": "RadioWorld",
+  "description": "Stream live radio from anywhere on Earth",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "categories": ["music", "entertainment"],
+  "shortcuts": [
+    { "name": "Discover", "url": "/", "description": "Browse trending stations" },
+    { "name": "World Map", "url": "/map", "description": "Explore radio by country" }
+  ]
+}
